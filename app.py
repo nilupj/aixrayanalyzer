@@ -26,6 +26,9 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Ensure database is initialized
+init_db()
+
 # Initialize session state variables if they don't exist
 if 'history' not in st.session_state:
     st.session_state.history = []
@@ -37,15 +40,114 @@ if 'current_heatmap' not in st.session_state:
     st.session_state.current_heatmap = None
 if 'model' not in st.session_state:
     st.session_state.model = None
+if 'user_id' not in st.session_state:
+    st.session_state.user_id = None
+if 'username' not in st.session_state:
+    st.session_state.username = None
+if 'logged_in' not in st.session_state:
+    st.session_state.logged_in = False
+if 'dicom_metadata' not in st.session_state:
+    st.session_state.dicom_metadata = None
+
+# Helper function to display session history items
+def display_session_history_item(index, item):
+    with st.expander(f"Analysis {index+1} - {item['timestamp']}"):
+        col1, col2, col3 = st.columns([1, 1, 1])
+        
+        with col1:
+            st.image(item['image'], caption="X-ray Image", use_column_width=True)
+        
+        with col2:
+            # Display top conditions
+            st.subheader("Detected Conditions")
+            for condition, confidence in sorted(
+                item['prediction'].items(), 
+                key=lambda x: x[1], 
+                reverse=True
+            )[:3]:
+                st.metric(condition, f"{confidence:.1%}")
+        
+        with col3:
+            # Display heatmap
+            if item['heatmap'] is not None:
+                plt.figure(figsize=(8, 6))
+                plt.imshow(np.array(item['image']))
+                plt.imshow(item['heatmap'], cmap='jet', alpha=0.4)
+                plt.axis('off')
+                plt.title("Areas of Interest")
+                st.pyplot(plt)
+
+# Load model on app startup for faster analysis
+@st.cache_resource
+def get_model():
+    return load_model()
 
 # App title and introduction
 st.title("🩻 AI-Powered X-Ray Analysis")
 
 # Sidebar
 with st.sidebar:
+    # User Authentication
+    st.header("User Account")
+    
+    if not st.session_state.logged_in:
+        login_tab, signup_tab = st.tabs(["Login", "Sign Up"])
+        
+        with login_tab:
+            login_username = st.text_input("Username", key="login_username")
+            login_password = st.text_input("Password", type="password", key="login_password")
+            
+            if st.button("Log In"):
+                if login_username and login_password:
+                    user = authenticate_user(login_username, login_password)
+                    if user:
+                        st.session_state.logged_in = True
+                        st.session_state.user_id = user.id
+                        st.session_state.username = user.username
+                        st.success(f"Welcome back, {user.username}!")
+                        st.rerun()
+                    else:
+                        st.error("Invalid username or password")
+                else:
+                    st.warning("Please enter both username and password")
+        
+        with signup_tab:
+            signup_username = st.text_input("Username", key="signup_username")
+            signup_email = st.text_input("Email", key="signup_email")
+            signup_password = st.text_input("Password", type="password", key="signup_password")
+            signup_confirm = st.text_input("Confirm Password", type="password", key="signup_confirm")
+            
+            if st.button("Sign Up"):
+                if signup_password != signup_confirm:
+                    st.error("Passwords do not match")
+                elif not (signup_username and signup_email and signup_password):
+                    st.warning("Please fill in all fields")
+                else:
+                    try:
+                        user = create_user(signup_username, signup_email, signup_password)
+                        st.session_state.logged_in = True
+                        st.session_state.user_id = user.id
+                        st.session_state.username = user.username
+                        st.success(f"Account created successfully! Welcome, {user.username}!")
+                        st.rerun()
+                    except Exception as e:
+                        if "UNIQUE constraint failed" in str(e):
+                            st.error("Username or email already exists")
+                        else:
+                            st.error(f"Error creating account: {e}")
+    else:
+        st.write(f"Logged in as: **{st.session_state.username}**")
+        if st.button("Log Out"):
+            st.session_state.logged_in = False
+            st.session_state.user_id = None
+            st.session_state.username = None
+            st.rerun()
+    
+    # Navigation
     st.header("Navigation")
     page = st.radio("Select a page:", ["Home", "Upload & Analyze", "History", "About"])
     
+    # Sample X-rays
     st.header("Sample X-rays")
     sample_images = {
         "Chest X-ray 1": "https://images.unsplash.com/photo-1504813184591-01572f98c85f",
@@ -70,11 +172,6 @@ with st.sidebar:
                 st.rerun()
             except Exception as e:
                 st.error(f"Error loading sample image: {e}")
-
-# Load model on app startup for faster analysis
-@st.cache_resource
-def get_model():
-    return load_model()
 
 # Initialize model
 if st.session_state.model is None:
@@ -134,9 +231,18 @@ elif page == "Upload & Analyze":
                     # DICOM file
                     img_array = read_dicom(uploaded_file)
                     img = Image.fromarray(img_array).convert("RGB")
+                    
+                    # Try to extract DICOM metadata
+                    try:
+                        metadata = extract_dicom_metadata(uploaded_file)
+                        st.session_state.dicom_metadata = metadata
+                    except Exception as e:
+                        st.warning(f"Could not extract DICOM metadata: {e}")
+                        st.session_state.dicom_metadata = None
                 else:
                     # Regular image file
                     img = Image.open(uploaded_file).convert("RGB")
+                    st.session_state.dicom_metadata = None
                 
                 # Check if image is valid
                 if not is_valid_image(img):
@@ -165,15 +271,40 @@ elif page == "Upload & Analyze":
                 heatmap = generate_heatmap(st.session_state.model, preprocessed_img)
                 st.session_state.current_heatmap = heatmap
                 
-                # Add to history
+                # Save to database if user is logged in
                 timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-                history_item = {
-                    "timestamp": timestamp,
-                    "image": st.session_state.current_image,
-                    "prediction": prediction,
-                    "heatmap": heatmap
-                }
-                st.session_state.history.append(history_item)
+                
+                # Generate a unique filename for the image
+                if not os.path.exists("data/uploads"):
+                    os.makedirs("data/uploads", exist_ok=True)
+                
+                image_filename = f"data/uploads/xray_{uuid.uuid4()}.jpg"
+                st.session_state.current_image.save(image_filename)
+                
+                # Get DICOM metadata if available
+                metadata = st.session_state.dicom_metadata if hasattr(st.session_state, 'dicom_metadata') else None
+                
+                # Save to database (user_id will be None if not logged in)
+                try:
+                    save_analysis_result(
+                        st.session_state.user_id,
+                        image_filename,
+                        st.session_state.current_prediction,
+                        metadata
+                    )
+                    
+                    # Add to session history for temporary display
+                    history_item = {
+                        "timestamp": timestamp,
+                        "image": st.session_state.current_image,
+                        "prediction": prediction,
+                        "heatmap": heatmap
+                    }
+                    st.session_state.history.append(history_item)
+                    
+                except Exception as e:
+                    st.error(f"Error saving to database: {str(e)}")
+                    st.warning("Analysis completed but not saved to history.")
     
     # Display results
     if st.session_state.current_prediction is not None:
@@ -230,35 +361,75 @@ elif page == "Upload & Analyze":
 elif page == "History":
     st.header("Analysis History")
     
-    if not st.session_state.history:
-        st.info("No analysis history yet. Upload and analyze an X-ray to see it here.")
+    if st.session_state.logged_in:
+        # Load analysis history from database for logged-in user
+        try:
+            analyses = get_user_analyses(st.session_state.user_id, limit=20)
+            
+            if not analyses:
+                st.info("No analysis history yet. Upload and analyze an X-ray to see it here.")
+            else:
+                for i, analysis in enumerate(analyses):
+                    # Get predictions for this analysis
+                    _, predictions = get_analysis_with_predictions(analysis.id)
+                    
+                    # Create a dictionary of condition -> probability
+                    prediction_dict = {p.condition: p.probability for p in predictions}
+                    
+                    with st.expander(f"Analysis {i+1} - {analysis.timestamp}"):
+                        col1, col2 = st.columns([1, 1])
+                        
+                        with col1:
+                            # Load and display the image
+                            if os.path.exists(analysis.image_path):
+                                img = Image.open(analysis.image_path)
+                                st.image(img, caption="X-ray Image", use_column_width=True)
+                            else:
+                                st.warning(f"Image file not found: {analysis.image_path}")
+                        
+                        with col2:
+                            # Display metadata if available
+                            if analysis.patient_id or analysis.modality or analysis.body_part:
+                                st.subheader("X-ray Information")
+                                if analysis.patient_id:
+                                    st.write(f"**Patient ID:** {analysis.patient_id}")
+                                if analysis.study_date:
+                                    st.write(f"**Study Date:** {analysis.study_date}")
+                                if analysis.modality:
+                                    st.write(f"**Modality:** {analysis.modality}")
+                                if analysis.body_part:
+                                    st.write(f"**Body Part:** {analysis.body_part}")
+                            
+                            # Display top conditions
+                            st.subheader("Detected Conditions")
+                            for condition, probability in sorted(
+                                prediction_dict.items(),
+                                key=lambda x: x[1],
+                                reverse=True
+                            )[:5]:
+                                st.metric(condition, f"{probability:.1%}")
+        except Exception as e:
+            st.error(f"Error loading history from database: {str(e)}")
+            st.warning("Showing session history instead.")
+            
+            # Fall back to session history
+            if not st.session_state.history:
+                st.info("No analysis history in this session. Upload and analyze an X-ray to see it here.")
+            else:
+                # Display session history
+                for i, item in enumerate(reversed(st.session_state.history)):
+                    display_session_history_item(i, item)
     else:
-        for i, item in enumerate(reversed(st.session_state.history)):
-            with st.expander(f"Analysis {i+1} - {item['timestamp']}"):
-                col1, col2, col3 = st.columns([1, 1, 1])
-                
-                with col1:
-                    st.image(item['image'], caption="X-ray Image", use_column_width=True)
-                
-                with col2:
-                    # Display top conditions
-                    st.subheader("Detected Conditions")
-                    for condition, confidence in sorted(
-                        item['prediction'].items(), 
-                        key=lambda x: x[1], 
-                        reverse=True
-                    )[:3]:
-                        st.metric(condition, f"{confidence:.1%}")
-                
-                with col3:
-                    # Display heatmap
-                    if item['heatmap'] is not None:
-                        plt.figure(figsize=(8, 6))
-                        plt.imshow(np.array(item['image']))
-                        plt.imshow(item['heatmap'], cmap='jet', alpha=0.4)
-                        plt.axis('off')
-                        plt.title("Areas of Interest")
-                        st.pyplot(plt)
+        # User not logged in, display message to login
+        st.warning("Please log in to view your analysis history.")
+        
+        # Still show session history if available
+        if st.session_state.history:
+            st.subheader("Current Session History")
+            for i, item in enumerate(reversed(st.session_state.history)):
+                display_session_history_item(i, item)
+        else:
+            st.info("No analysis history in this session. Upload and analyze an X-ray to see it here.")
 
 # About page
 elif page == "About":
@@ -276,6 +447,7 @@ elif page == "About":
     - **OpenCV & Pillow**: Image processing
     - **Matplotlib**: Visualization
     - **SimpleITK/pydicom**: DICOM file handling
+    - **SQLAlchemy & PostgreSQL**: Database for storing analysis history
     - **Grad-CAM**: Heatmap generation for AI explainability
     
     ### Model Information
