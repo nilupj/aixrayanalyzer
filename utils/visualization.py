@@ -1,7 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import torch
 import cv2
+# Import PyTorch through our wrapper to avoid Streamlit file watcher errors
+from utils.torch_wrapper import torch
 
 def generate_heatmap(model, preprocessed_img):
     """
@@ -14,9 +15,7 @@ def generate_heatmap(model, preprocessed_img):
     Returns:
         numpy.ndarray: Heatmap visualization
     """
-    import numpy as np
-    import cv2
-    import torch
+    # Using imports from the top of the file
     
     # Get features from the last layer
     features = None
@@ -129,7 +128,6 @@ def create_overlay(original_image, heatmap, alpha=0.4):
     original_array = np.array(original_image)
     
     # Resize heatmap to match original image
-    import cv2
     heatmap_resized = cv2.resize(heatmap, (original_array.shape[1], original_array.shape[0]))
     
     # Apply colormap to heatmap (using jet colormap)

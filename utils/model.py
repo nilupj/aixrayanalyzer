@@ -1,7 +1,5 @@
-import torch
-import torch.nn as nn
-import torchvision.models as models
-from collections import OrderedDict
+# Import PyTorch components through our wrapper to avoid Streamlit file watcher errors
+from utils.torch_wrapper import torch, nn, models, OrderedDict
 
 def load_model():
     """
