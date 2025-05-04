@@ -155,7 +155,7 @@ with st.sidebar:
         "Pneumonia X-ray": "https://images.radiopaedia.org/images/40532170/522dce8bf1ee049a8a5c3147a2b6ff.jpeg",
         "Tuberculosis X-ray": "https://images.radiopaedia.org/images/556722/6ac82713eacb3a4acd8fa28bd0290e.jpg",
         "Pleural Effusion X-ray": "https://images.radiopaedia.org/images/168348/368b18f272a0d29d88c6519d8c81a8.jpg",
-        "Rib Fracture X-ray": "https://images.radiopaedia.org/images/3043723/38c3356f75f7d1ece9fe2b523d0cd8.jpg",
+        "Rib Fracture X-ray": "https://prod-images-static.radiopaedia.org/images/53264866/13da989926eb8c661c9fb18c390be7_big_gallery.jpeg",
         
         # Bone X-rays
         "Normal Bone X-ray": "https://images.radiopaedia.org/images/149300/e2b246ea6b2383ab702418fa7e71d8.jpg",
