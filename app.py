@@ -155,6 +155,7 @@ with st.sidebar:
         "Pneumonia X-ray": "https://images.radiopaedia.org/images/40532170/522dce8bf1ee049a8a5c3147a2b6ff.jpeg",
         "Tuberculosis X-ray": "https://images.radiopaedia.org/images/556722/6ac82713eacb3a4acd8fa28bd0290e.jpg",
         "Pleural Effusion X-ray": "https://images.radiopaedia.org/images/168348/368b18f272a0d29d88c6519d8c81a8.jpg",
+        "Rib Fracture X-ray": "https://images.radiopaedia.org/images/3043723/38c3356f75f7d1ece9fe2b523d0cd8.jpg",
         
         # Bone X-rays
         "Normal Bone X-ray": "https://images.radiopaedia.org/images/149300/e2b246ea6b2383ab702418fa7e71d8.jpg",
@@ -338,8 +339,16 @@ elif page == "Upload & Analyze":
                 if any(bone_type in st.session_state.selected_sample for bone_type in ["Bone", "Spine"]):
                     is_bone_xray = True
             
+            # Special handling for fractures in different types of X-rays
+            is_rib_fracture = False
+            if hasattr(st.session_state, 'selected_sample'):
+                if "Rib Fracture" in st.session_state.selected_sample:
+                    is_rib_fracture = True
+            
             if top_condition == "Mass" and is_bone_xray:
                 st.warning(f"Potential fracture detected with {st.session_state.current_prediction[top_condition]:.1%} confidence")
+            elif top_condition == "Pleural_Thickening" and is_rib_fracture:
+                st.warning(f"Potential rib fracture detected with {st.session_state.current_prediction[top_condition]:.1%} confidence")
             elif top_condition != "No Finding":
                 st.warning(f"Potential finding: {top_condition} with {st.session_state.current_prediction[top_condition]:.1%} confidence")
             else:
@@ -370,12 +379,21 @@ elif page == "Upload & Analyze":
         displayed_count = 0
         for condition, confidence in sorted_conditions:
             if confidence > 0.05 and displayed_count < 3:
-                with st.expander(f"{condition} ({confidence:.1%} confidence)"):
-                    condition_info = get_condition_info(condition)
-                    st.markdown(f"### {condition}")
-                    st.markdown(f"**Description:** {condition_info['description']}")
-                    st.markdown(f"**Common symptoms:** {condition_info['symptoms']}")
-                    st.markdown(f"**Treatment options:** {condition_info['treatment']}")
+                # Special case for rib fractures shown through Pleural_Thickening in the model
+                if condition == "Pleural_Thickening" and hasattr(st.session_state, 'selected_sample') and "Rib Fracture" in st.session_state.selected_sample:
+                    with st.expander(f"Rib Fracture ({confidence:.1%} confidence)"):
+                        condition_info = get_condition_info("Rib_Fracture")
+                        st.markdown(f"### Rib Fracture")
+                        st.markdown(f"**Description:** {condition_info['description']}")
+                        st.markdown(f"**Common symptoms:** {condition_info['symptoms']}")
+                        st.markdown(f"**Treatment options:** {condition_info['treatment']}")
+                else:
+                    with st.expander(f"{condition} ({confidence:.1%} confidence)"):
+                        condition_info = get_condition_info(condition)
+                        st.markdown(f"### {condition}")
+                        st.markdown(f"**Description:** {condition_info['description']}")
+                        st.markdown(f"**Common symptoms:** {condition_info['symptoms']}")
+                        st.markdown(f"**Treatment options:** {condition_info['treatment']}")
                 displayed_count += 1
 
 # History page

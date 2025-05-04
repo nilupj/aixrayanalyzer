@@ -101,6 +101,11 @@ def get_condition_info(condition):
             "symptoms": "Persistent cough (often with blood-tinged sputum), chest pain, weight loss, night sweats, fever, and fatigue.",
             "treatment": "Treatment requires a combination of antibiotics taken for 6-9 months. Multiple drugs are used to prevent antibiotic resistance."
         },
+        "Rib_Fracture": {
+            "description": "A rib fracture is a break in one or more of the bones forming the rib cage. On chest X-rays, rib fractures may appear as linear lucencies or step-offs in the normally smooth contour of the rib.",
+            "symptoms": "Pain in the chest wall, especially when breathing deeply, coughing, or moving; tenderness or bruising over the affected area; and shallow breathing to minimize pain.",
+            "treatment": "Most rib fractures heal on their own with rest, pain management (including NSAIDs or prescription pain relievers), and breathing exercises to prevent complications like pneumonia. Severe cases may require surgical stabilization."
+        },
         "Pulmonary_Edema": {
             "description": "Pulmonary edema is a condition caused by excess fluid in the lungs, often due to heart failure. On X-rays, it appears as increased density in the lung fields with a butterfly pattern.",
             "symptoms": "Severe shortness of breath, feeling of drowning or suffocation, wheezing, coughing up frothy sputum, anxiety and restlessness.",
