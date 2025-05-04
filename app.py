@@ -150,12 +150,20 @@ with st.sidebar:
     # Sample X-rays
     st.header("Sample X-rays")
     sample_images = {
-        "Chest X-ray 1": "https://images.unsplash.com/photo-1504813184591-01572f98c85f",
-        "Chest X-ray 2": "https://images.unsplash.com/photo-1519494080410-f9aa76cb4283",
-        "Bone X-ray": "https://images.unsplash.com/photo-1514416432279-50fac261c7dd",
-        "Dental X-ray": "https://images.unsplash.com/photo-1460672985063-6764ac8b9c74",
-        "Spine X-ray": "https://images.unsplash.com/photo-1516841273335-e39b37888115",
-        "Abdominal X-ray": "https://images.unsplash.com/photo-1471864190281-a93a3070b6de"
+        # Chest X-rays
+        "Normal Chest X-ray": "https://images.radiopaedia.org/images/715141/af5cfddd0990a06ce59a8337cc30b3.jpg",
+        "Pneumonia X-ray": "https://images.radiopaedia.org/images/40532170/522dce8bf1ee049a8a5c3147a2b6ff.jpeg",
+        "Tuberculosis X-ray": "https://images.radiopaedia.org/images/556722/6ac82713eacb3a4acd8fa28bd0290e.jpg",
+        "Pleural Effusion X-ray": "https://images.radiopaedia.org/images/168348/368b18f272a0d29d88c6519d8c81a8.jpg",
+        
+        # Bone X-rays
+        "Normal Bone X-ray": "https://images.radiopaedia.org/images/149300/e2b246ea6b2383ab702418fa7e71d8.jpg",
+        "Fracture Bone X-ray": "https://images.radiopaedia.org/images/7882153/3d8a08d6b3bdd33ba531a61f37c69f.jpg",
+        "Osteoarthritis X-ray": "https://images.radiopaedia.org/images/575851/98e0eae8a255aeae94d5fb942b1c33.jpg",
+        
+        # Spine X-rays
+        "Normal Spine X-ray": "https://images.radiopaedia.org/images/556721/1ce7cb63cfd66d80a0cd042b23e8dd.jpg",
+        "Scoliosis Spine X-ray": "https://images.radiopaedia.org/images/556722/ea321a9fa32df0ed3c4873c2c59b75.jpg"
     }
     
     selected_sample = st.selectbox("Load a sample X-ray:", ["None"] + list(sample_images.keys()))
@@ -325,7 +333,9 @@ elif page == "Upload & Analyze":
             # Check if we're dealing with a bone X-ray and using "Mass" to indicate fracture
             is_bone_xray = False
             if hasattr(st.session_state, 'selected_sample'):
-                if st.session_state.selected_sample in ["Bone X-ray", "Spine X-ray"]:
+                bone_samples = ["Normal Bone X-ray", "Fracture Bone X-ray", "Osteoarthritis X-ray", 
+                               "Normal Spine X-ray", "Scoliosis Spine X-ray"]
+                if any(bone_type in st.session_state.selected_sample for bone_type in ["Bone", "Spine"]):
                     is_bone_xray = True
             
             if top_condition == "Mass" and is_bone_xray:

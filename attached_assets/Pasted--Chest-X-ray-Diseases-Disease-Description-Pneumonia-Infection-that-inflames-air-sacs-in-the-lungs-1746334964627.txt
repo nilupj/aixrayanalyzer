@@ -1,0 +1,56 @@
+
+🫁 Chest X-ray Diseases
+Disease	Description
+Pneumonia	Infection that inflames air sacs in the lungs.
+Tuberculosis (TB)	Bacterial lung infection, often with cavitations.
+Pulmonary Edema	Fluid buildup in lungs due to heart failure.
+Pleural Effusion	Fluid between the lung and chest wall.
+Atelectasis	Partial or complete lung collapse.
+Pneumothorax	Air in pleural space, causing lung collapse.
+Cardiomegaly	Enlarged heart, seen as increased heart-to-thorax ratio.
+Lung Nodule/Mass	Potential signs of cancer or infection.
+COPD/Emphysema	Chronic obstructive pulmonary disease with hyperinflated lungs.
+Interstitial Lung Disease (ILD)	Group of disorders affecting lung interstitium.
+COVID-19	May show bilateral ground-glass opacities and infiltrates.
+Bronchiectasis	Dilated bronchi due to chronic infection.
+Fibrosis	Scarring and thickening of lung tissue.
+Consolidation	Solidification of lung tissue due to infection or inflammation.
+🦴 Bone and Skeletal X-ray Findings
+Disease	Description
+Fractures	Broken bones (simple, compound, hairline, etc.).
+Osteoarthritis	Degeneration of joint cartilage, joint space narrowing.
+Osteoporosis	Low bone density, increased fracture risk.
+Bone Tumors	Benign or malignant growths.
+Rickets	Vitamin D deficiency leading to soft bones in children.
+Scoliosis	Abnormal spinal curvature.
+Spinal Degeneration	Disc narrowing, osteophyte formation.
+Spondylolisthesis	Vertebra slips over the one below.
+Paget’s Disease	Disorganized bone remodeling.
+Kyphosis/Lordosis	Abnormal spinal curvature (humpback/arched).
+🦷 Dental X-ray Conditions
+Disease	Description
+Dental Caries	Tooth decay (cavities).
+Periodontitis	Infection of gums and supporting tooth structures.
+Impacted Teeth	Teeth that haven't erupted properly.
+Root Canal Infection	Infection of the dental pulp.
+Jaw Fractures	Mandible or maxilla breaks.
+🧠 Skull/Head X-ray Findings
+
+(less commonly used today, but still relevant in trauma)
+Condition	Description
+Skull Fracture	Break in the cranial bones.
+Sinusitis	Inflammation of sinuses, seen as opacification.
+Calcifications	Abnormal deposits in brain or skull.
+🫀 Cardiovascular Abnormalities (on chest X-ray)
+Disease	Description
+Aortic Aneurysm	Bulge in aorta, visible as widened mediastinum.
+Congestive Heart Failure (CHF)	Fluid in lungs, enlarged heart.
+Pericardial Effusion	Fluid around the heart.
+Pulmonary Hypertension	Enlarged pulmonary arteries.
+⚠️ Abdominal X-ray Conditions
+Condition	Description
+Bowel Obstruction	Blockage in intestines, gas pattern change.
+Constipation	Fecal loading visible.
+Kidney Stones	Radiopaque stones may appear.
+Pneumoperitoneum	Free air under diaphragm (perforation).
+Organomegaly	Enlarged organs like liver or spleen.
