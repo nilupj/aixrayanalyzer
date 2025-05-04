@@ -1,6 +1,7 @@
 import streamlit as st
 import os
 import time
+import uuid
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -11,8 +12,11 @@ import torch
 from utils.image_processing import preprocess_image, is_valid_image
 from utils.model import load_model, predict
 from utils.visualization import generate_heatmap, plot_prediction_results
-from utils.dicom_handler import read_dicom
+from utils.dicom_handler import read_dicom, extract_dicom_metadata
+from utils.database import save_analysis_result, get_user_analyses, get_analysis_with_predictions
+from utils.database import create_user, authenticate_user
 from data.conditions import get_condition_info
+from models import init_db
 
 # Set page config
 st.set_page_config(
