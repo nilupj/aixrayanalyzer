@@ -169,6 +169,8 @@ with st.sidebar:
                 response = requests.get(image_url)
                 img = Image.open(BytesIO(response.content))
                 st.session_state.current_image = img
+                # Store the selected sample name for reference in the prediction model
+                st.session_state.selected_sample = selected_sample
                 st.rerun()
             except Exception as e:
                 st.error(f"Error loading sample image: {e}")
@@ -319,7 +321,16 @@ elif page == "Upload & Analyze":
             
             # Find top condition
             top_condition = max(st.session_state.current_prediction.items(), key=lambda x: x[1])[0]
-            if top_condition != "No Finding":
+            
+            # Check if we're dealing with a bone X-ray and using "Mass" to indicate fracture
+            is_bone_xray = False
+            if hasattr(st.session_state, 'selected_sample'):
+                if st.session_state.selected_sample in ["Bone X-ray", "Spine X-ray"]:
+                    is_bone_xray = True
+            
+            if top_condition == "Mass" and is_bone_xray:
+                st.warning(f"Potential fracture detected with {st.session_state.current_prediction[top_condition]:.1%} confidence")
+            elif top_condition != "No Finding":
                 st.warning(f"Potential finding: {top_condition} with {st.session_state.current_prediction[top_condition]:.1%} confidence")
             else:
                 st.success("No significant abnormalities detected")

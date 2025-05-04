@@ -30,9 +30,14 @@ def get_condition_info(condition):
             "treatment": "Treatment targets the underlying cause and may include antibiotics, antivirals, or other medications depending on the specific condition."
         },
         "Mass": {
-            "description": "A lung mass is an abnormal spot or area in the lungs. It may represent a benign tumor, an abscess, or cancer.",
-            "symptoms": "Often asymptomatic but may include persistent cough, shortness of breath, chest pain, coughing up blood.",
-            "treatment": "Treatment depends on the cause and may include surgery, radiation therapy, chemotherapy, or targeted drug therapy."
+            "description": "A mass in medical imaging can represent different conditions depending on the body part. In chest X-rays, it may represent a lung tumor, abscess, or cancer. In bone X-rays, a mass or abnormal density can indicate a bone fracture, tumor, or other structural abnormality.",
+            "symptoms": "Symptoms vary by location. For lungs: cough, shortness of breath, chest pain. For bones: pain, swelling, limited mobility, visible deformity if a fracture is present.",
+            "treatment": "Treatment depends on the specific diagnosis and location. It may include surgery, radiation therapy, chemotherapy, or for fractures: immobilization, casting, or surgical repair with pins, plates, or screws."
+        },
+        "Fracture": {
+            "description": "A fracture is a break in a bone that occurs when physical force exceeds the bone's strength. Fractures can range from hairline cracks to complete breaks where the bone fragments separate.",
+            "symptoms": "Pain that worsens with movement, swelling, bruising, deformity, limited mobility of the affected area, and sometimes audible cracking during the injury.",
+            "treatment": "Treatment typically involves immobilizing the bone with a cast or brace to allow proper healing. Some fractures require surgical intervention with pins, plates, or screws to stabilize the bone. Physical therapy is often recommended during recovery."
         },
         "Nodule": {
             "description": "A lung nodule is a small, round growth on the lung that is smaller than 3 cm in diameter. Most lung nodules are benign (not cancerous).",
