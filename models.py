@@ -71,14 +71,22 @@ class Prediction(Base):
 # Define function to get database session
 def get_db_session():
     """Create and return a database session"""
-    Session = sessionmaker(bind=engine)
-    return Session()
+    try:
+        Session = sessionmaker(bind=engine)
+        return Session()
+    except Exception as e:
+        print(f"Error creating database session: {e}")
+        return None
 
 # Create tables in the database
 def init_db():
     """Initialize the database by creating all tables"""
-    Base.metadata.create_all(engine)
-    print("Database tables created.")
+    try:
+        Base.metadata.create_all(engine)
+        print("Database tables created.")
+    except Exception as e:
+        print(f"Error initializing database: {e}")
+        print("Continuing without database functionality.")
 
 if __name__ == "__main__":
     # Initialize database when this script is run directly

@@ -14,10 +14,15 @@ def save_analysis_result(user_id, image_path, predictions, metadata=None):
         metadata (dict): Dictionary of DICOM metadata (if available)
         
     Returns:
-        Analysis: The saved Analysis object
+        Analysis: The saved Analysis object or None if database error
     """
     # Create a database session
     session = get_db_session()
+    
+    # If session creation failed, return None
+    if session is None:
+        print("Warning: Could not save analysis to database - session creation failed")
+        return None
     
     try:
         # Create a new Analysis record
@@ -53,11 +58,18 @@ def save_analysis_result(user_id, image_path, predictions, metadata=None):
         return analysis
     except Exception as e:
         # Roll back any changes if an error occurs
-        session.rollback()
-        raise e
+        try:
+            session.rollback()
+        except:
+            pass
+        print(f"Error saving to database: {e}")
+        return None
     finally:
         # Close the session
-        session.close()
+        try:
+            session.close()
+        except:
+            pass
 
 def get_user_analyses(user_id, limit=10):
     """
@@ -71,14 +83,24 @@ def get_user_analyses(user_id, limit=10):
         list: List of Analysis objects
     """
     session = get_db_session()
+    if session is None:
+        print("Warning: Could not get user analyses - session creation failed")
+        return []
+        
     try:
         analyses = session.query(Analysis).filter(
             Analysis.user_id == user_id
         ).order_by(Analysis.timestamp.desc()).limit(limit).all()
         
         return analyses
+    except Exception as e:
+        print(f"Error retrieving user analyses: {e}")
+        return []
     finally:
-        session.close()
+        try:
+            session.close()
+        except:
+            pass
 
 def get_analysis_with_predictions(analysis_id):
     """
@@ -91,6 +113,10 @@ def get_analysis_with_predictions(analysis_id):
         tuple: (Analysis object, list of Prediction objects)
     """
     session = get_db_session()
+    if session is None:
+        print("Warning: Could not get analysis - session creation failed")
+        return None, []
+        
     try:
         analysis = session.query(Analysis).filter(
             Analysis.id == analysis_id
@@ -104,8 +130,14 @@ def get_analysis_with_predictions(analysis_id):
         ).order_by(Prediction.probability.desc()).all()
         
         return analysis, predictions
+    except Exception as e:
+        print(f"Error retrieving analysis with predictions: {e}")
+        return None, []
     finally:
-        session.close()
+        try:
+            session.close()
+        except:
+            pass
 
 def create_user(username, email, password):
     """
@@ -120,6 +152,10 @@ def create_user(username, email, password):
         User: The created user object
     """
     session = get_db_session()
+    if session is None:
+        print("Warning: Could not create user - session creation failed")
+        return None
+        
     try:
         # Hash the password
         password_hash = hashlib.sha256(password.encode()).hexdigest()
@@ -139,10 +175,17 @@ def create_user(username, email, password):
         
         return user
     except Exception as e:
-        session.rollback()
-        raise e
+        try:
+            session.rollback()
+        except:
+            pass
+        print(f"Error creating user: {e}")
+        return None
     finally:
-        session.close()
+        try:
+            session.close()
+        except:
+            pass
 
 def authenticate_user(username, password):
     """
@@ -156,6 +199,10 @@ def authenticate_user(username, password):
         User: User object if authentication is successful, None otherwise
     """
     session = get_db_session()
+    if session is None:
+        print("Warning: Could not authenticate user - session creation failed")
+        return None
+        
     try:
         # Hash the password
         password_hash = hashlib.sha256(password.encode()).hexdigest()
@@ -168,5 +215,11 @@ def authenticate_user(username, password):
         ).first()
         
         return user
+    except Exception as e:
+        print(f"Error authenticating user: {e}")
+        return None
     finally:
-        session.close()
+        try:
+            session.close()
+        except:
+            pass

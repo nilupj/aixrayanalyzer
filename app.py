@@ -295,27 +295,28 @@ elif page == "Upload & Analyze":
                 # Get DICOM metadata if available
                 metadata = st.session_state.dicom_metadata if hasattr(st.session_state, 'dicom_metadata') else None
                 
-                # Save to database (user_id will be None if not logged in)
-                try:
-                    save_analysis_result(
-                        st.session_state.user_id,
-                        image_filename,
-                        st.session_state.current_prediction,
-                        metadata
-                    )
-                    
-                    # Add to session history for temporary display
-                    history_item = {
-                        "timestamp": timestamp,
-                        "image": st.session_state.current_image,
-                        "prediction": prediction,
-                        "heatmap": heatmap
-                    }
-                    st.session_state.history.append(history_item)
-                    
-                except Exception as e:
-                    st.error(f"Error saving to database: {str(e)}")
-                    st.warning("Analysis completed but not saved to history.")
+                # Save to session history regardless of database status
+                history_item = {
+                    "timestamp": timestamp,
+                    "image": st.session_state.current_image,
+                    "prediction": prediction,
+                    "heatmap": heatmap
+                }
+                st.session_state.history.append(history_item)
+                
+                # Try to save to database, but continue even if it fails
+                result = save_analysis_result(
+                    st.session_state.user_id,
+                    image_filename,
+                    st.session_state.current_prediction,
+                    metadata
+                )
+                
+                # Inform the user about database status (but don't disrupt the flow)
+                if result is None:
+                    st.warning("Analysis saved to session history but could not be saved to database.")
+                else:
+                    st.success("Analysis completed and saved successfully.")
     
     # Display results
     if st.session_state.current_prediction is not None:
@@ -401,63 +402,61 @@ elif page == "History":
     st.header("Analysis History")
     
     if st.session_state.logged_in:
-        # Load analysis history from database for logged-in user
-        try:
-            analyses = get_user_analyses(st.session_state.user_id, limit=20)
+        # Try to load analysis history from database for logged-in user
+        analyses = get_user_analyses(st.session_state.user_id, limit=20)
+        
+        if not analyses:
+            st.info("No database history available. Showing session history instead.")
             
-            if not analyses:
-                st.info("No analysis history yet. Upload and analyze an X-ray to see it here.")
-            else:
-                for i, analysis in enumerate(analyses):
-                    # Get predictions for this analysis
-                    _, predictions = get_analysis_with_predictions(analysis.id)
-                    
-                    # Create a dictionary of condition -> probability
-                    prediction_dict = {p.condition: p.probability for p in predictions}
-                    
-                    with st.expander(f"Analysis {i+1} - {analysis.timestamp}"):
-                        col1, col2 = st.columns([1, 1])
-                        
-                        with col1:
-                            # Load and display the image
-                            if os.path.exists(analysis.image_path):
-                                img = Image.open(analysis.image_path)
-                                st.image(img, caption="X-ray Image", use_column_width=True)
-                            else:
-                                st.warning(f"Image file not found: {analysis.image_path}")
-                        
-                        with col2:
-                            # Display metadata if available
-                            if analysis.patient_id or analysis.modality or analysis.body_part:
-                                st.subheader("X-ray Information")
-                                if analysis.patient_id:
-                                    st.write(f"**Patient ID:** {analysis.patient_id}")
-                                if analysis.study_date:
-                                    st.write(f"**Study Date:** {analysis.study_date}")
-                                if analysis.modality:
-                                    st.write(f"**Modality:** {analysis.modality}")
-                                if analysis.body_part:
-                                    st.write(f"**Body Part:** {analysis.body_part}")
-                            
-                            # Display top conditions
-                            st.subheader("Detected Conditions")
-                            for condition, probability in sorted(
-                                prediction_dict.items(),
-                                key=lambda x: x[1],
-                                reverse=True
-                            )[:5]:
-                                st.metric(condition, f"{probability:.1%}")
-        except Exception as e:
-            st.error(f"Error loading history from database: {str(e)}")
-            st.warning("Showing session history instead.")
-            
-            # Fall back to session history
+            # Show session history if available
             if not st.session_state.history:
                 st.info("No analysis history in this session. Upload and analyze an X-ray to see it here.")
             else:
                 # Display session history
                 for i, item in enumerate(reversed(st.session_state.history)):
                     display_session_history_item(i, item)
+        else:
+            # Display database history
+            st.success(f"Showing {len(analyses)} analyses from your history")
+            for i, analysis in enumerate(analyses):
+                # Get predictions for this analysis
+                _, predictions = get_analysis_with_predictions(analysis.id)
+                
+                # Create a dictionary of condition -> probability
+                prediction_dict = {p.condition: p.probability for p in predictions}
+                
+                with st.expander(f"Analysis {i+1} - {analysis.timestamp}"):
+                    col1, col2 = st.columns([1, 1])
+                    
+                    with col1:
+                        # Load and display the image
+                        if os.path.exists(analysis.image_path):
+                            img = Image.open(analysis.image_path)
+                            st.image(img, caption="X-ray Image", use_column_width=True)
+                        else:
+                            st.warning(f"Image file not found: {analysis.image_path}")
+                    
+                    with col2:
+                        # Display metadata if available
+                        if analysis.patient_id or analysis.modality or analysis.body_part:
+                            st.subheader("X-ray Information")
+                            if analysis.patient_id:
+                                st.write(f"**Patient ID:** {analysis.patient_id}")
+                            if analysis.study_date:
+                                st.write(f"**Study Date:** {analysis.study_date}")
+                            if analysis.modality:
+                                st.write(f"**Modality:** {analysis.modality}")
+                            if analysis.body_part:
+                                st.write(f"**Body Part:** {analysis.body_part}")
+                        
+                        # Display top conditions
+                        st.subheader("Detected Conditions")
+                        for condition, probability in sorted(
+                            prediction_dict.items(),
+                            key=lambda x: x[1],
+                            reverse=True
+                        )[:5]:
+                            st.metric(condition, f"{probability:.1%}")
     else:
         # User not logged in, display message to login
         st.warning("Please log in to view your analysis history.")
