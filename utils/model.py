@@ -100,15 +100,24 @@ def predict(model, image_tensor):
         if image_is_bone:
             # "Mass" at index 4 can represent fracture for demo purposes
             probabilities[4] = 0.85  # High probability of fracture/mass
-            probabilities[13] = 0.15  # Low probability of "No Finding"
+            probabilities[13] = 0.1  # Low probability of "No Finding"
+            probabilities = probabilities / (np.sum(probabilities) + 1e-8)  # Normalize
+        # For rib fracture X-rays (which are chest X-rays with fractures)
         # For rib fracture X-rays (which are chest X-rays with fractures)
         elif image_has_rib_fracture:
             # For rib fractures, we'll use index 12 (Pleural_Thickening) to represent Rib_Fracture
             probabilities[12] = 0.85  # High probability of rib fracture
-            probabilities[13] = 0.15  # Low probability of "No Finding"
+            probabilities[13] = 0.1  # Low probability of "No Finding"
+            probabilities = probabilities / (np.sum(probabilities) + 1e-8)  # Normalize
         else:
-            # For other non-bone X-rays, maintain higher "No Finding" probability
-            probabilities[13] = 0.7  # "No Finding" index is 13
+            # For non-fracture X-rays
+            max_prob = np.max(probabilities)
+            if max_prob > 0.3:  # If we detect any significant condition
+                probabilities[13] = 0.1  # Lower "No Finding" probability
+            else:
+                probabilities[13] = 0.7  # Higher "No Finding" probability
+            probabilities = probabilities / (np.sum(probabilities) + 1e-8)
+            
         
         # Ensure probabilities sum to 1 for multi-class (not needed for multi-label)
         # probabilities = probabilities / np.sum(probabilities)
